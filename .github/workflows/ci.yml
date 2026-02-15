@@ -27,7 +27,8 @@ jobs:
           global-json-file: global.json
 
       - name: Build native runtime (linux-x64)
-        run: ./scripts/build-native.sh "artifacts/native/linux-x64"
+        shell: pwsh
+        run: ./scripts/build-native.ps1 "artifacts/native/linux-x64"
 
       - name: Pack NuGet
         run: dotnet pack src/Darp.Luau.Native/Darp.Luau.Native.csproj -c Release -o artifacts/packages -p:Version=${PACKAGE_VERSION}
