@@ -5,7 +5,8 @@
       "release-type": "simple",
       "package-name": "Darp.Luau.Native",
       "changelog-path": "CHANGELOG.md",
-      "include-v-in-tag": true
+      "include-v-in-tag": true,
+      "skip-github-release": true
     }
   }
 }
