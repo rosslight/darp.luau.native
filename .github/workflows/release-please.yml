@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.rp.outputs.release_created }}
-      version: ${{ steps.rp.outputs.version }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
     steps:
       - name: Run release-please
         id: rp
@@ -26,9 +26,14 @@ jobs:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  create-release:
+  build-package:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/build-package.yml
+
+  publish:
+    name: Publish and release
+    needs: [release-please, build-package]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,47 +41,35 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Resolve Luau version
-        id: luau
-        shell: bash
-        run: |
-          set -euo pipefail
-          luau_tag="$(git -C native/luau describe --tags --exact-match 2>/dev/null || true)"
-          if [[ -n "${luau_tag}" ]]; then
-            luau_version="${luau_tag#v}"
-          else
-            luau_version="$(git -C native/luau rev-parse --short=12 HEAD)"
-          fi
-          echo "version=${luau_version}" >> "${GITHUB_OUTPUT}"
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages
 
-      - name: Build tag name
-        id: tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="${{ needs.release-please.outputs.version }}"
-          luau="${{ steps.luau.outputs.version }}"
-          tag="v${version}+luau${luau}"
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-          echo "Release tag: ${tag}"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-      - name: Create tag and GitHub release
-        shell: bash
+      - name: Publish to NuGet.org
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        shell: bash
         run: |
           set -euo pipefail
-          tag="${{ steps.tag.outputs.tag }}"
+          shopt -s nullglob
+          for package in artifacts/packages/*.nupkg; do
+            dotnet nuget push "${package}" \
+              --api-key "${NUGET_API_KEY}" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --skip-duplicate
+          done
 
-          # Idempotent: skip if the tag already exists
-          if git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
-            echo "Tag ${tag} already exists, skipping."
-            exit 0
-          fi
-
-          git tag "${tag}"
-          git push origin "${tag}"
-
-          gh release create "${tag}" \
-            --title "${tag}" \
-            --notes-file CHANGELOG.md
+      - name: Upload packages to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg

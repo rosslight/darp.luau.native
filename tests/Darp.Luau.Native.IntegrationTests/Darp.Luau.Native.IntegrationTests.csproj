@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseLocalProjectReference Condition="'$(UseLocalProjectReference)' == ''">true</UseLocalProjectReference>
-    <DarpLuauNativeVersion Condition="'$(DarpLuauNativeVersion)' == ''">0.0.0-local</DarpLuauNativeVersion>
+    <DarpLuauNativeVersion Condition="'$(DarpLuauNativeVersion)' == ''">$(Version)</DarpLuauNativeVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseLocalProjectReference)' == 'true'">

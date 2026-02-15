@@ -6,7 +6,14 @@
       "package-name": "Darp.Luau.Native",
       "changelog-path": "CHANGELOG.md",
       "include-v-in-tag": true,
-      "skip-github-release": true
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "/Directory.Build.props",
+          "xpath": "/Project/PropertyGroup/Version"
+        }
+      ]
     }
   }
 }
