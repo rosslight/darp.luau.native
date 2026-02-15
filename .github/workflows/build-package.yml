@@ -119,11 +119,19 @@ jobs:
         shell: pwsh
         run: |
           $source = (Resolve-Path "artifacts/packages").Path
-          dotnet restore tests/Darp.Luau.Native.IntegrationTests/Darp.Luau.Native.IntegrationTests.csproj --source $source --source "https://api.nuget.org/v3/index.json" -p:UseLocalProjectReference=false
+          Write-Host "Package source: $source"
+          dotnet restore tests/Darp.Luau.Native.IntegrationTests/Darp.Luau.Native.IntegrationTests.csproj `
+            --source "https://api.nuget.org/v3/index.json" `
+            --source "$source" `
+            -p:UseLocalProjectReference=false
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run integration tests
         shell: pwsh
         run: |
-          dotnet run --project tests/Darp.Luau.Native.IntegrationTests/Darp.Luau.Native.IntegrationTests.csproj -c Release --no-restore -p:UseLocalProjectReference=false
+          dotnet run `
+            --project tests/Darp.Luau.Native.IntegrationTests/Darp.Luau.Native.IntegrationTests.csproj `
+            -c Release `
+            --no-restore `
+            -p:UseLocalProjectReference=false
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
