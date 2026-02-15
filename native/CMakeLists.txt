@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 project(luau_monolithic_dll LANGUAGES C CXX)
 
+# Must be set before add_subdirectory(luau) so Luau static libs build with -fPIC
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Build Luau as STATIC libs (important: no cross-DLL internals)
 set(LUAU_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(LUAU_BUILD_CLI OFF CACHE BOOL "" FORCE)
@@ -42,5 +45,21 @@ if (MSVC)
     "/WHOLEARCHIVE:$<TARGET_LINKER_FILE:Luau.VM>"
     "/WHOLEARCHIVE:$<TARGET_LINKER_FILE:Luau.Compiler>"
     "/WHOLEARCHIVE:$<TARGET_LINKER_FILE:Luau.Require>"
+  )
+elseif(APPLE)
+  # macOS equivalent (if you care)
+  target_link_options(luau PRIVATE
+    "LINKER:-force_load,$<TARGET_FILE:Luau.VM>"
+    "LINKER:-force_load,$<TARGET_FILE:Luau.Compiler>"
+    "LINKER:-force_load,$<TARGET_FILE:Luau.Require>"
+  )
+else()
+  # Linux (GNU ld / lld)
+  target_link_options(luau PRIVATE
+    "LINKER:--whole-archive"
+    $<TARGET_FILE:Luau.VM>
+    $<TARGET_FILE:Luau.Compiler>
+    $<TARGET_FILE:Luau.Require>
+    "LINKER:--no-whole-archive"
   )
 endif()

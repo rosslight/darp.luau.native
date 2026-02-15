@@ -37,6 +37,7 @@ if (!(Test-Path $OutputDir)) {
 
 if (Test-Path $BuildDir) {
   Remove-Item -Recurse -Force $BuildDir
+  Write-Host "Cleaned BuildDir"
   mkdir $BuildDir | Out-Null
 }
 
