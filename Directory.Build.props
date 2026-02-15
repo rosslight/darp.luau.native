@@ -8,6 +8,6 @@
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
     <LuauVersion Condition="'$(LuauVersion)' == ''">unknown</LuauVersion>
-    <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(Version)+luau.$(LuauVersion)</InformationalVersion>
+    <InformationalVersion Condition="'$(InformationalVersion)' == '' And !$(Version.Contains('+'))">$(Version)+luau.$(LuauVersion)</InformationalVersion>
   </PropertyGroup>
 </Project>
