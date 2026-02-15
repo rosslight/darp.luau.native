@@ -1,18 +1,31 @@
 param(
   [Parameter(Mandatory = $true)]
   [string]$OutputDir,
-  [string]$Configuration = "Release",
-  [string]$Generator = "",  # empty = use CMake's default generator
-  [string]$Platform = "x64"
+  [Parameter(Mandatory = $true)]
+  [string]$RuntimeId,
+  [Parameter(Mandatory = $true)]
+  [string]$Generator,
+  [string]$Configuration = "Release"
 )
 
 $ErrorActionPreference = "Stop"
 
-# Everything relative to the caller
+# Parse RuntimeId into OS and arch (e.g. "win-x64" → os=win, arch=x64)
+$parts = $RuntimeId -split '-', 2
+if ($parts.Length -ne 2) {
+  throw "Invalid RuntimeId '$RuntimeId'. Expected format: <os>-<arch> (e.g. win-x64, linux-arm64, osx-arm64)"
+}
+$os = $parts[0]
+$arch = $parts[1]
+
+# Everything relative to the script
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BuildDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "../artifacts/build"))
 $SourceDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "../native"))
 
+Write-Host "Runtime ID:       $RuntimeId (os=$os, arch=$arch)"
+Write-Host "Generator:        $Generator"
+Write-Host "Configuration:    $Configuration"
 Write-Host "Build directory:  $BuildDir"
 Write-Host "Source directory:  $SourceDir"
 Write-Host "Output directory: $OutputDir"
@@ -24,18 +37,46 @@ if (!(Test-Path $OutputDir)) {
 
 if (Test-Path $BuildDir) {
   Remove-Item -Recurse -Force $BuildDir
-  mkdir $BuildDir
+  mkdir $BuildDir | Out-Null
 }
 
-$cmakeArgs = @("-S", $SourceDir, "-B", $BuildDir, "-A", $Platform)
-if ($Generator) { $cmakeArgs += "-G", $Generator }
+# Build CMake configure arguments based on RID
+$cmakeArgs = @("-S", $SourceDir, "-B", $BuildDir, "-G", $Generator)
+
+switch ($os) {
+  "win" {
+    $msvcArch = if ($arch -eq "arm64") { "ARM64" } else { $arch }
+    $cmakeArgs += "-A", $msvcArch
+  }
+  "linux" {
+    $cmakeArgs += "-DCMAKE_BUILD_TYPE=$Configuration"
+  }
+  "osx" {
+    $cmakeArgs += "-DCMAKE_BUILD_TYPE=$Configuration"
+    $osxArch = if ($arch -eq "x64") { "x86_64" } else { $arch }
+    $cmakeArgs += "-DCMAKE_OSX_ARCHITECTURES=$osxArch"
+  }
+  default {
+    throw "Unsupported OS prefix '$os' in RuntimeId '$RuntimeId'. Expected win, linux, or osx."
+  }
+}
+
 & cmake @cmakeArgs
-cmake --build $BuildDir --config $Configuration --parallel
+if ($LASTEXITCODE -ne 0) { throw "CMake configure failed with exit code $LASTEXITCODE" }
 
-$DllPath = Join-Path $BuildDir "$Configuration\luau.dll"
-if (!(Test-Path $DllPath)) {
-  throw "luau.dll not found at $DllPath"
+cmake --build $BuildDir --config $Configuration --parallel
+if ($LASTEXITCODE -ne 0) { throw "CMake build failed with exit code $LASTEXITCODE" }
+
+# Resolve output library path based on RID
+switch ($os) {
+  "win"   { $LibPath = Join-Path $BuildDir "$Configuration/luau.dll" }
+  "linux" { $LibPath = Join-Path $BuildDir "libluau.so" }
+  "osx"   { $LibPath = Join-Path $BuildDir "libluau.dylib" }
 }
 
-Copy-Item $DllPath $OutputDir -Force
-Write-Host "Copied $DllPath -> $OutputDir"
+if (!(Test-Path $LibPath)) {
+  throw "Native library not found at $LibPath"
+}
+
+Copy-Item $LibPath $OutputDir -Force
+Write-Host "Copied $LibPath -> $OutputDir"
