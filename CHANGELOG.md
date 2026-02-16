@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0+luau.0.708](https://github.com/rosslight/Darp.Luau.Native/compare/v0.2.0+luau.0.708...v0.3.0+luau.0.708) (2026-02-16)
+
+
+### Features
+
+* Add luau_free ([ec2eac9](https://github.com/rosslight/Darp.Luau.Native/commit/ec2eac990a1e8c1dfc93a2ecacda4a71264480c5))
+
 ## [0.2.0+luau.0.708](https://github.com/rosslight/darp.luau.native/compare/v0.1.0+luau.0.708...v0.2.0+luau.0.708) (2026-02-16)
 
 
