@@ -1,6 +1,13 @@
 # Darp.Luau.Native
 
-Managed .NET bindings for Luau with prebuilt native runtimes per RID.
+[![NuGet](https://img.shields.io/nuget/v/Darp.Luau.Native.svg)](https://www.nuget.org/packages/Darp.Luau.Native)
+[![Downloads](https://img.shields.io/nuget/dt/Darp.Luau.Native)](https://www.nuget.org/packages/Darp.Luau.Native)
+
+Managed .NET bindings for [Luau](https://github.com/luau-lang/luau) with prebuilt native runtimes per RID.
+
+Git tags follow the format `v1.2.3+luau.0.708`, where `1.2.3` is the package
+SemVer and `0.708` is the Luau version equal the `native/luau`
+submodule.
 
 ## Included native runtimes
 
@@ -11,28 +18,21 @@ Managed .NET bindings for Luau with prebuilt native runtimes per RID.
 - `osx-x64`
 - `osx-arm64`
 
-## Generate bindings
+## Develop locally
 
+Build bindings:
 ```powershell
-./bindgen/generate_bindings.ps1
+./scripts/generate_bindings.ps1
 ```
 
-## Build locally
-
-- Windows
-
+Build native libraries:
 ```powershell
-./scripts/build-native.ps1 artifacts/native -Platform x64 -Configuration Release
+./scripts/build_native.ps1 -RuntimeId 'win-x64' -Generator 'Visual Studio 18 2026'
+./scripts/build_native.ps1 -RuntimeId 'linux-x64' -Generator 'Ninja'
+./scripts/build_native.ps1 -RuntimeId 'osx-x64' -Generator 'Ninja'
 ```
 
-- Linux/macOS
-
-```bash
-./scripts/build-native.sh artifacts/native x64
-```
-
-## Pack
-
-```bash
+Pack nuget package:
+```shell
 dotnet pack src/Darp.Luau.Native/Darp.Luau.Native.csproj -c Release -o artifacts/packages
 ```

@@ -1,7 +1,5 @@
 param(
   [Parameter(Mandatory = $true)]
-  [string]$OutputDir,
-  [Parameter(Mandatory = $true)]
   [string]$RuntimeId,
   [Parameter(Mandatory = $true)]
   [string]$Generator,
@@ -21,6 +19,7 @@ $arch = $parts[1]
 # Everything relative to the script
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BuildDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "../artifacts/build"))
+$OutputDir = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $ScriptDir "../artifacts/native") $RuntimeId))
 $SourceDir = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "../native"))
 
 Write-Host "Runtime ID:       $RuntimeId (os=$os, arch=$arch)"

@@ -39,7 +39,7 @@ jobs:
 
       - name: Build native runtime
         shell: pwsh
-        run: ./scripts/build-native.ps1 -OutputDir "artifacts/native/${{ matrix.rid }}" -RuntimeId "${{ matrix.rid }}" -Generator "${{ matrix.generator }}"
+        run: ./scripts/build_native.ps1 -RuntimeId "${{ matrix.rid }}" -Generator "${{ matrix.generator }}"
 
       - name: Upload native runtime artifact
         uses: actions/upload-artifact@v4

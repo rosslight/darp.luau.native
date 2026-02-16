@@ -3,7 +3,9 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Point cargo directly at the Rust crate's Cargo.toml
-$ManifestPath = Join-Path $ScriptDir "Cargo.toml"
+$ManifestPath = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "../bindgen/Cargo.toml"))
+
+Write-Host "Manifest directory:  $ManifestPath"
 
 Write-Host "Generating C# bindings..." -ForegroundColor Cyan
 & cargo build --manifest-path $ManifestPath
