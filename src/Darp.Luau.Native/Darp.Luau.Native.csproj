@@ -26,12 +26,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../artifacts/native/**/*.*"
+        <None Include="../../artifacts/native/**/*.*" Condition="Exists('../../artifacts/native')"
               Pack="true"
               PackagePath="runtimes/%(RecursiveDir)native/%(Filename)%(Extension)"
               Visible="true"
-              Condition="Exists('../../artifacts/native')" >
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+              TargetPath="%(Filename)%(Extension)"
+              CopyToOutputDirectory="Always">
         </None> 
     </ItemGroup>
 

@@ -606,6 +606,9 @@ namespace Darp.Luau.Native
         [DllImport(__DllName, EntryPoint = "luau_set_compile_constant_string", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void luau_set_compile_constant_string(void** constant, byte* s, nuint l);
 
+        [DllImport(__DllName, EntryPoint = "luau_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void luau_free(void* ptr);
+
 
     }
 

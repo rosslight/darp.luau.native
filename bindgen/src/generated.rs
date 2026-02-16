@@ -1270,6 +1270,9 @@ unsafe extern "C" {
         l: usize,
     );
 }
+unsafe extern "C" {
+    pub fn luau_free(ptr: *mut ::std::os::raw::c_void);
+}
 pub type __builtin_va_list = *mut ::std::os::raw::c_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

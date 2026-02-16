@@ -20,4 +20,22 @@ unsafe
         lua_close(state);
     }
     Console.WriteLine("Darp.Luau.Native integration sequence passed.");
+
+    // Verify compile + free round-trip
+    var source = "return 1"u8;
+    fixed (byte* pSource = source)
+    {
+        nuint bytecodeSize;
+        var bytecode = luau_compile(pSource, (nuint)source.Length, null, &bytecodeSize);
+        try
+        {
+            ArgumentOutOfRangeException.ThrowIfEqual(bytecodeSize, (nuint)0);
+            ArgumentNullException.ThrowIfNull(bytecode);
+        }
+        finally
+        {
+            luau_free(bytecode);
+        }
+    }
+    Console.WriteLine("Darp.Luau.Native compile/free sequence passed.");
 }
