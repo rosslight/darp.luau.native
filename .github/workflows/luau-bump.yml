@@ -1,0 +1,90 @@
+name: Luau Bump
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-luau:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Resolve latest Luau tag
+        id: luau
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git -C native/luau fetch --tags origin
+
+          latest_tag="$(git -C native/luau tag --sort=v:refname | grep -E '^[0-9]+\.[0-9]+$' | tail -n1)"
+          if [[ -z "${latest_tag}" ]]; then
+            echo "No Luau tags found."
+            exit 1
+          fi
+
+          current_sha="$(git -C native/luau rev-parse HEAD)"
+          latest_sha="$(git -C native/luau rev-list -n 1 "${latest_tag}")"
+
+          echo "current_sha=${current_sha}" >> "${GITHUB_OUTPUT}"
+          echo "latest_sha=${latest_sha}" >> "${GITHUB_OUTPUT}"
+          echo "latest_tag=${latest_tag}" >> "${GITHUB_OUTPUT}"
+
+          if [[ "${current_sha}" == "${latest_sha}" ]]; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          git -C native/luau checkout "${latest_tag}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Update version metadata
+        if: steps.luau.outputs.changed == 'true'
+        shell: bash
+        run: python3 scripts/update_luau_version.py "${{ steps.luau.outputs.latest_tag }}"
+
+      - name: Setup Rust
+        if: steps.luau.outputs.changed == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install libclang
+        if: steps.luau.outputs.changed == 'true'
+        run: sudo apt-get update && sudo apt-get install -y clang libclang-dev
+
+      - name: Regenerate bindings
+        if: steps.luau.outputs.changed == 'true'
+        shell: pwsh
+        run: ./scripts/generate_bindings.ps1
+
+      - name: Create or update Luau bump PR
+        if: steps.luau.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automation/luau-bump
+          delete-branch: true
+          commit-message: "chore(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
+          title: "chore(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
+          body: |
+            Automated Luau bump.
+
+            - Updates `native/luau` to `${{ steps.luau.outputs.latest_tag }}`
+            - Updates package version metadata to match `${{ steps.luau.outputs.latest_tag }}`
+            - Regenerates Rust bindgen output
+            - Regenerates .NET P/Invoke bindings
+          add-paths: |
+            native/luau
+            Directory.Build.props
+            .release-please-manifest.json
+            bindgen/src/generated.rs
+            src/Darp.Luau.Native/LuauNative.g.cs
+            scripts/update_luau_version.py
