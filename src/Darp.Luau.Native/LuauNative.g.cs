@@ -208,7 +208,7 @@ namespace Darp.Luau.Native
         public static extern void lua_pushstring(lua_State* L, byte* s);
 
         [DllImport(__DllName, EntryPoint = "lua_pushvfstring", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern byte* lua_pushvfstring(lua_State* L, byte* fmt, byte* argp);
+        public static extern byte* lua_pushvfstring(lua_State* L, byte* fmt, __va_list_tag* argp);
 
         [DllImport(__DllName, EntryPoint = "lua_pushfstringL", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern byte* lua_pushfstringL(lua_State* L, byte* fmt);
@@ -428,6 +428,9 @@ namespace Darp.Luau.Native
 
         [DllImport(__DllName, EntryPoint = "lua_getcoverage", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void lua_getcoverage(lua_State* L, int funcindex, void* context, delegate* unmanaged[Cdecl]<void*, byte*, int, int, int*, nuint, void> callback);
+
+        [DllImport(__DllName, EntryPoint = "lua_getcounters", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void lua_getcounters(lua_State* L, int funcindex, void* context, delegate* unmanaged[Cdecl]<void*, byte*, int, void> functionvisit, delegate* unmanaged[Cdecl]<void*, int, int, ulong, void> countervisit);
 
         [DllImport(__DllName, EntryPoint = "lua_debugtrace", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern byte* lua_debugtrace(lua_State* L);
@@ -659,7 +662,7 @@ namespace Darp.Luau.Native
         public delegate* unmanaged[Cdecl]<lua_State*, int, void> interrupt;
         public delegate* unmanaged[Cdecl]<lua_State*, int, void> panic;
         public delegate* unmanaged[Cdecl]<lua_State*, lua_State*, void> userthread;
-        public delegate* unmanaged[Cdecl]<byte*, nuint, short> useratom;
+        public delegate* unmanaged[Cdecl]<lua_State*, byte*, nuint, short> useratom;
         public delegate* unmanaged[Cdecl]<lua_State*, lua_Debug*, void> debugbreak;
         public delegate* unmanaged[Cdecl]<lua_State*, lua_Debug*, void> debugstep;
         public delegate* unmanaged[Cdecl]<lua_State*, lua_Debug*, void> debuginterrupt;
@@ -724,13 +727,22 @@ namespace Darp.Luau.Native
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public unsafe partial struct __va_list_tag
+    {
+        public uint gp_offset;
+        public uint fp_offset;
+        public void* overflow_arg_area;
+        public void* reg_save_area;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe partial struct TString
     {
         public byte _address;
     }
 
 
-    public enum lua_Status : int
+    public enum lua_Status : uint
     {
         LUA_OK = 0,
         LUA_YIELD = 1,
@@ -741,7 +753,7 @@ namespace Darp.Luau.Native
         LUA_BREAK = 6,
     }
 
-    public enum lua_CoStatus : int
+    public enum lua_CoStatus : uint
     {
         LUA_CORUN = 0,
         LUA_COSUS = 1,
@@ -750,7 +762,7 @@ namespace Darp.Luau.Native
         LUA_COERR = 4,
     }
 
-    public enum lua_Type : int
+    public enum lua_Type : uint
     {
         LUA_TNIL = 0,
         LUA_TBOOLEAN = 1,
@@ -768,7 +780,7 @@ namespace Darp.Luau.Native
         LUA_TDEADKEY = 13,
     }
 
-    public enum lua_GCOp : int
+    public enum lua_GCOp : uint
     {
         LUA_GCSTOP = 0,
         LUA_GCRESTART = 1,
@@ -782,21 +794,21 @@ namespace Darp.Luau.Native
         LUA_GCSETSTEPSIZE = 9,
     }
 
-    public enum luarequire_NavigateResult : int
+    public enum luarequire_NavigateResult : uint
     {
         NAVIGATE_SUCCESS = 0,
         NAVIGATE_AMBIGUOUS = 1,
         NAVIGATE_NOT_FOUND = 2,
     }
 
-    public enum luarequire_WriteResult : int
+    public enum luarequire_WriteResult : uint
     {
         WRITE_SUCCESS = 0,
         WRITE_BUFFER_TOO_SMALL = 1,
         WRITE_FAILURE = 2,
     }
 
-    public enum luarequire_ConfigStatus : int
+    public enum luarequire_ConfigStatus : uint
     {
         CONFIG_ABSENT = 0,
         CONFIG_AMBIGUOUS = 1,
