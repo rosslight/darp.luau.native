@@ -70,6 +70,7 @@ jobs:
         if: steps.luau.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
+          token: ${{ secrets.AUTOMATION_TOKEN }}
           branch: automation/luau-bump
           delete-branch: true
           commit-message: "deps(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
