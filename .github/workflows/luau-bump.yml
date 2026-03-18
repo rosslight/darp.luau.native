@@ -72,8 +72,8 @@ jobs:
         with:
           branch: automation/luau-bump
           delete-branch: true
-          commit-message: "feat(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
-          title: "feat(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
+          commit-message: "deps(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
+          title: "deps(luau): bump to ${{ steps.luau.outputs.latest_tag }}"
           body: |
             Automated Luau bump.
 
